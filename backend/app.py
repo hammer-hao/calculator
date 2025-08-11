@@ -5,7 +5,11 @@ from datetime import datetime
 
 app = Flask(__name__)
 # Allow your frontend origin in prod (replace "*" with actual URL later)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app, resources={r"/api/*": {"origins": [
+    "https://hammer-hao.github.io",
+                                 "http://localhost:5173" 
+]
+                                 }})
 
 # In-memory history (simple; resets on redeploy)
 HISTORY = []
