@@ -6,6 +6,17 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation, getcontext
 import re
 
+from collections import defaultdict
+
+HISTORY = defaultdict(list)  # maps client_id -> list of entries
+
+def get_client_id():
+    cid = request.headers.get("X-Client-Id")
+    if not cid:
+        # fallback: per-IP (still shared on NATs, so prefer header)
+        cid = request.remote_addr or "anon"
+    return cid
+
 # Optional: set precision for Decimal math (tweak as you like)
 getcontext().prec = 40
 
@@ -138,9 +149,6 @@ CORS(app, resources={r"/api/*": {"origins": [
 ]
                                  }})
 
-# In-memory history (simple; resets on redeploy)
-HISTORY = []
-
 def safe_calc(a, op, b):
     # Use Decimal for accuracy and predictable rounding.
     try:
@@ -182,8 +190,8 @@ def calc():
 
 @app.get("/api/history")
 def history():
-    # Optional enhancement
-    return jsonify({"ok": True, "items": HISTORY[-50:]})
+    items = HISTORY[get_client_id()][-50:]
+    return jsonify({"ok": True, "items": items})
 
 @app.post("/api/eval")
 def eval_api():
@@ -193,8 +201,12 @@ def eval_api():
         return jsonify({"ok": False, "error": "Empty expression"}), 400
     try:
         res = evaluate_expression(expr)
-        entry = {"a": expr, "op": "=", "b": "", "result": res, "ts": datetime.utcnow().isoformat() + "Z"}
-        HISTORY.append(entry)  # or persist to SQLite if you added it
+        entry = {
+            "a": expr, "op": "=", "b": "",
+            "result": res,
+            "ts": datetime.utcnow().isoformat() + "Z"
+        }
+        HISTORY[get_client_id()].append(entry)
         return jsonify({"ok": True, "result": res})
     except ExprError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
