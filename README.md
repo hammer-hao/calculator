@@ -1,5 +1,7 @@
 # A Simple Calculator
 
+The app is here: https://hammer-hao.github.io/calculator/
+
 ## What is this
 
 Calculator is a tiny full-stack demo: a Vue 3 (Vite) frontend talking to a Flask API. All math is evaluated on the server, so the UI stays thin and safe. It includes a keypad + keyboard input, a two-line display with auto-shrink, a dark/cyan theme, toast errors, and a loading spinner. The history sidebar is per-user (scoped by an X-Client-Id header) and stored in-memory on the server. 
